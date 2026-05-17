@@ -2,59 +2,134 @@
 
 import { useState } from "react";
 
-const demoOutput = {
-  observation:
-    "Today, the child engaged confidently in sensory play with colourful sand. They explored texture using their hands and tools, showing curiosity, concentration, and emerging fine motor control.",
-  eylf:
-    "EYLF 2.0 Outcome 4: Children are confident and involved learners. Outcome 5: Children are effective communicators.",
-  followUp:
-    "Provide a small-world sensory tray with natural materials, scoops, and containers to extend problem-solving, language, and collaborative play.",
-  parentSummary:
-    "Your child enjoyed exploring colourful sand today, using their senses and hands to investigate texture, movement, and patterns."
-};
+const documentationTypes = [
+  "Daily Journal",
+  "Individual Observation",
+  "Incident Report",
+  "Transition Report according to developmental milestone",
+  "Weekly Program",
+];
 
 export default function ObservationDemo() {
-  const [notes, setNotes] = useState("Child played with colourful sand, scooping, pouring and talking with friends.");
-  const [generated, setGenerated] = useState(false);
+  const [notes, setNotes] = useState("");
+  const [ageGroup, setAgeGroup] = useState("Toddlers");
+  const [tone, setTone] = useState("Professional");
+  const [docType, setDocType] = useState("Daily Journal");
+  const [result, setResult] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  async function generateObservation() {
+    setLoading(true);
+    setResult("");
+
+    try {
+      const res = await fetch("/api/generate-observation", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          notes,
+          ageGroup,
+          tone,
+          docType,
+        }),
+      });
+
+      const data = await res.json();
+      setResult(data.result || data.error || "Something went wrong.");
+    } catch (error) {
+      setResult("Failed to generate documentation. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function copyResult() {
+    await navigator.clipboard.writeText(result);
+    alert("Copied!");
+  }
 
   return (
     <div className="rounded-3xl bg-white p-6 shadow-xl">
-      <h2 className="text-xl font-bold">Observation Assistant</h2>
+      <h2 className="text-2xl font-bold">ECEC Documentation Assistant</h2>
+
       <p className="mt-2 text-sm text-slate-600">
-        Start with rough notes. The AI turns them into professional documentation.
+        Privacy reminder: avoid entering children&apos;s full names, addresses,
+        medical details or sensitive family information.
       </p>
 
-      <label className="mt-5 block text-sm font-medium">Educator notes</label>
+      <div className="mt-5 grid gap-4 md:grid-cols-3">
+        <div>
+          <label className="text-sm font-medium">Age Group</label>
+          <select
+            className="mt-2 w-full rounded-xl border p-3"
+            value={ageGroup}
+            onChange={(e) => setAgeGroup(e.target.value)}
+          >
+            <option>Babies</option>
+            <option>Toddlers</option>
+            <option>Kindy</option>
+            <option>Pre-Kindy</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="text-sm font-medium">Writing Tone</label>
+          <select
+            className="mt-2 w-full rounded-xl border p-3"
+            value={tone}
+            onChange={(e) => setTone(e.target.value)}
+          >
+            <option>Professional</option>
+            <option>Warm</option>
+            <option>Concise</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="text-sm font-medium">Documentation Type</label>
+          <select
+            className="mt-2 w-full rounded-xl border p-3"
+            value={docType}
+            onChange={(e) => setDocType(e.target.value)}
+          >
+            {documentationTypes.map((type) => (
+              <option key={type}>{type}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
       <textarea
-        className="mt-2 min-h-32 w-full rounded-2xl border border-slate-200 p-4 text-sm outline-none focus:ring-2 focus:ring-orange-300"
+        className="mt-5 min-h-40 w-full rounded-xl border p-4"
+        placeholder="Example: Children explored colourful sand today, scooping, pouring and talking with friends..."
         value={notes}
         onChange={(e) => setNotes(e.target.value)}
       />
 
       <button
-        className="mt-4 w-full rounded-2xl bg-slate-900 px-5 py-3 font-semibold text-white"
-        onClick={() => setGenerated(true)}
+        className="mt-5 rounded-xl bg-black px-5 py-3 text-white disabled:opacity-50"
+        onClick={generateObservation}
+        disabled={loading}
       >
-        Generate demo observation
+        {loading ? "Generating..." : `Generate ${docType}`}
       </button>
 
-      {generated && (
-        <div className="mt-6 space-y-4">
-          <Result title="Observation" text={demoOutput.observation} />
-          <Result title="EYLF Links" text={demoOutput.eylf} />
-          <Result title="Follow-up Experience" text={demoOutput.followUp} />
-          <Result title="Parent Summary" text={demoOutput.parentSummary} />
+      {result && (
+        <div className="mt-6">
+          <div className="flex items-center justify-between">
+            <h3 className="font-semibold">Generated Documentation</h3>
+            <button className="rounded-lg border px-3 py-1 text-sm" onClick={copyResult}>
+              Copy
+            </button>
+          </div>
+
+          <div className="mt-3 whitespace-pre-wrap rounded-2xl bg-orange-50 p-5 text-sm leading-7">
+            {result}
+          </div>
         </div>
       )}
-    </div>
-  );
-}
-
-function Result({ title, text }: { title: string; text: string }) {
-  return (
-    <div className="rounded-2xl bg-orange-50 p-4">
-      <h3 className="font-semibold">{title}</h3>
-      <p className="mt-1 text-sm leading-6 text-slate-700">{text}</p>
     </div>
   );
 }
