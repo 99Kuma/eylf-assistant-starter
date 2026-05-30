@@ -1,4 +1,4 @@
-import ObservationDemo from "@/components/ObservationDemo";
+import ObservationDemo from "../components/ObservationDemo";
 import { Sparkles, Clock, BookOpen, Users } from "lucide-react";
 
 export default function Home() {
@@ -12,11 +12,11 @@ export default function Home() {
               AI support for ECTs and educators
             </div>
             <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
-              Write better observations in minutes, not after hours.
+              Write better documentation in minutes, not after hours.
             </h1>
             <p className="mt-5 text-lg leading-8 text-slate-700">
-              Turn quick educator notes into professional learning observations,
-              EYLF 2.0 links, family-friendly summaries, and follow-up experiences.
+              Turn quick educator notes into professional daily journals,
+              observations, incident reports, transition reports, and weekly programs.
             </p>
             <div className="mt-8 grid gap-3 sm:grid-cols-3">
               <Feature icon={<Clock />} title="Save time" text="Reduce documentation workload." />
