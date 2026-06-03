@@ -1,5 +1,7 @@
 import OpenAI from "openai";
 import { NextResponse } from "next/server";
+import { getFrameworkPrompt } from "../../../lib/promptRouter";
+import { buildPlanningCyclePrompt } from "../../../lib/planningCycle";
 
 const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -16,13 +18,16 @@ export async function POST(req: Request) {
       );
     }
 
+    const frameworkPrompt = getFrameworkPrompt(docType);
+    const planningCyclePrompt = buildPlanningCyclePrompt();
+
     const response = await client.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
         {
           role: "system",
           content:
-            "You are an Australian early childhood education assistant. Help ECTs and educators write professional documentation aligned with EYLF 2.0. Keep wording warm, professional and practical.",
+            "You are an Australian early childhood education assistant. Help ECTs and educators write professional documentation aligned with EYLF 2.0. Keep wording warm, professional, practical and strength-based. Do not include company names, centre names, internal program names, or source document names.",
         },
         {
           role: "user",
@@ -31,16 +36,24 @@ Age Group: ${ageGroup}
 Documentation Type: ${docType}
 Writing Tone: ${tone}
 
-Create professional EYLF documentation from these educator notes:
+Framework to follow:
+${frameworkPrompt}
 
+Planning cycle guidance:
+${planningCyclePrompt}
+
+Educator notes:
 ${notes}
 
-Return:
-1. Observation or documentation
-2. EYLF links
-3. Analysis of learning
-4. Follow-up experience
-5. Parent summary
+Create a complete ${docType} using Australian ECEC language.
+
+Requirements:
+- Use the selected documentation type structure.
+- Link learning to relevant EYLF 2.0 outcomes.
+- Include analysis of learning where appropriate.
+- Include intentional teaching or follow-up planning.
+- Include family-friendly wording where appropriate.
+- Avoid inventing child names, diagnoses, sensitive family details or medical information.
 `,
         },
       ],
@@ -53,7 +66,7 @@ Return:
     console.error(error);
 
     return NextResponse.json(
-      { error: "Failed to generate observation." },
+      { error: "Failed to generate documentation." },
       { status: 500 }
     );
   }
